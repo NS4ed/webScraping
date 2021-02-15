@@ -1,92 +1,87 @@
 const cheerio = require('cheerio');
-const getUrls = require('get-urls');
 const fetch = require('node-fetch');
-const cors = require('cors')({origin: true});
+const fs = require('fs');
+const { exit } = require('process');
+//const getUrls = require('get-urls');
+//const cors = require('cors')({origin: true});
+
+const email_regex = /(?<=Email: ).*?(?=\s|Internet)/g;
+const web_regex = /(?<=Internet: ).*?(?=\s)/g;
+const phone_regex = /(?<=Phone: ).*?(?= Fax| Mobile)/g;
+const fax_regex = /(?<=Fax: ).*?(?= Email)/g;
+
+const file_path = process.argv[2];
 
 var index = 1;
 var dict = {};
-var adrs;
-var adrs1;
+var JSON_file;
 
-async function scrapHtml(url) {
+async function scrapBLSHtml(url) {
+// Gets html from given url
     const res = await fetch(url);
     const html = await res.text();
-   
+
+// Gets all BLS info
+// NOTE: BLS info is under the 'bls' class     
     const $ = cheerio.load(html);
     const $$ = cheerio.load($('.bls').html());
     const bls = $('.bls');
-   
+
+// Gets each data field via regular expressions 
+// ***See '<data>_regex' constants above***
+    const emails = bls.text().match(email_regex);
+    const urls = bls.text().match(web_regex);
+    const phones = bls.text().match(phone_regex);
+    const faxs = bls.text().match(fax_regex);
+
     const h4 = await bls.find('h4').map((_, element) => {
         var info = {
-            Director: 0, Address: 0, ID: 0,
+            ID: 0, Director: 0, Address: 0,
             Phone: 0, Fax: 0,
             Email: 0, URL: 0
         };
-        // Director name is at index 0
-        info['Director'] = $$('p').get(index).children[0].data;
 
-        // Address info varies across index 4, 6, and 8 (needs QA check before storing address value)
+        // Object to hold all found paragraph tags
+        const str_obj = $$('p').get(index);
+
+        // Director name is at index 0
+        info['Director'] = str_obj.children[0].data;
+
+        // Address info varies across index 4, 6, 8, 10, and 12 (QA checks index/ID before storing address value)
         if (index == 3 || index == 9 || index == 17 || index == 29){
-            info['Address'] = $$('p').get(index).children[4].data + $$('p').get(index).children[6].data
+            info['Address'] = str_obj.children[4].data.trim() + " " + $$('p').get(index).children[6].data.trim();
         }
         else if (index == 32){
-            info['Address'] = $$('p').get(index).children[10].data + $$('p').get(index).children[12].data
+            info['Address'] = str_obj.children[10].data.trim() + " " + $$('p').get(index).children[12].data.trim();
         }
         else {
-            info['Address'] = $$('p').get(index).children[6].data + $$('p').get(index).children[8].data
+            info['Address'] = str_obj.children[6].data.trim() + " " + $$('p').get(index).children[8].data.trim();
         }
 
-        // Phone/Fax info varies (needs QA check before storing address value)
-        switch(index){
-            case 3: case 9: case 17: case 29:
-                info['Phone'] = $$('p').get(index).children[8].data.substr(7, 15);
-                info['Fax'] = $$('p').get(index).children[8].data.substr(27);
-                break;
-            case 8:
-                info['Phone'] = $$('p').get(index).children[14].data.substr(7, 15);
-                info['Fax'] = $$('p').get(index).children[14].data.substr(27);
-                break;
-            case 12: case 22: case 35: case 47: case 48: case 50:
-                info['Phone'] = $$('p').get(index).children[12].data.substr(7, 15);
-                info['Fax'] = $$('p').get(index).children[12].data.substr(27);
-                break;
-            case 32: case 43:
-                info['Phone'] = $$('p').get(index).children[14].data.substr(7, 15);
-                info['Fax'] = $$('p').get(index).children[14].data.substr(27);
-                break;
-            case 41: // Puerto Rico
-                info['Phone'] = $$('p').get(index).children[14].data.substr(7, 15);
-                info['Fax'] = $$('p').get(index).children[14].data.substr(27);
-                break;
-            default:
-                info['Phone'] = $$('p').get(index).children[10].data.substr(7, 15);
-                info['Fax'] = $$('p').get(index).children[10].data.substr(27);
-                switch(index){
-                    case 14:
-                        info['Fax'] = $$('p').get(index).children[10].data.substr(35);
-                        break;
-                    case 20:
-                        info['Fax'] = $$('p').get(index).children[10].data.substr(51);
-                        break;
-                    default:
-                }
-        }
-        //NOTE: Fix phone data input for 'Peurto Rico'
-        info['ID'] = index;
+        // Stores remaining data fields
+        info['ID'] = index-1;
+        info['Phone'] = phones[index-1];
+        info['Fax'] = faxs[index-1];
+        info['Email'] = emails[index-1];
+        info['URL'] = urls[index-1];
+
+        // Stores data object into dictionary object
         dict[$(element).text()] = info;
+
+        // Increments index/ID
         index++;
-        
     });
 
     
-    
     // (TEST PRINT) Prints dictionary object
-    console.log(dict['LOUISIANA']);
+    //console.log(dict);
 
-    // (Test Print) Prints info for various states (via index)
-    for (var i = 0; i < $$('p').get(50).children.length; i++){
-       // console.log(i + $$('p').get(50).children[i].data);
-    }
+    // Writes new json file
+    JSON_file = JSON.stringify(dict);
+    fs.writeFile(file_path, JSON_file, (err) => {
+        if (err) console.log("Error: Cannot write to specified file: " + file_path + "\n");
+        exit(1);
+    });
 }
 
-scrapHtml('https://www.bls.gov/bls/ofolist.htm');
+scrapBLSHtml('https://www.bls.gov/bls/ofolist.htm');
