@@ -75,13 +75,13 @@ async function scrapBLS_GS(url, state, flag = 0) {
     if (flag != 0){
         await page._client.send('Page.setDownloadBehavior', {
             behavior: 'allow',
-            downloadPath: './Excel_Sheets/EP/regionLvl/'+state
+            downloadPath: './Excel_Sheets/regionLvl/'+state
         });
     }
     else {
         await page._client.send('Page.setDownloadBehavior', {
             behavior: 'allow',
-            downloadPath: './Excel_Sheets/EP/stateLvl/'+state
+            downloadPath: './Excel_Sheets/stateLvl/'+state
         });
     }
 
