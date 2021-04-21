@@ -9,7 +9,6 @@ var regionRows = [];
 async function getRegionRows(){
     const workbook = await xlsx.readFile(path);
     const worksheet = await workbook.Sheets[workbook.SheetNames[0]];
-    //console.log(worksheet['A4']);
     var range = xlsx.utils.decode_range(worksheet['!ref']);
     var i = 0;
     var region = null;
@@ -17,10 +16,8 @@ async function getRegionRows(){
         const Area = worksheet[xlsx.utils.encode_cell({r: rowNum, c: 0})];
         if (i == 3) region = Area.v;
         if (region != null && Area.v != region){
-            //console.log("\n i = " + i +"\n");
             regionRows.push(i);
             region = Area.v;
-
         }
         i++;
     }
@@ -30,19 +27,30 @@ async function getRegionRows(){
 
 // Parse and write region-specific excel files
 async function parseWrite(regionRows){
+    var j = 2;
     var workbook = xlsx.readFile(path);
     var worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
     var df = await xlsx.utils.sheet_to_json(worksheet);
  
-    var temparray = await df.slice(2, regionRows[0]-1);
-    //console.log(df[1]);
-    //await temparray.unshift(df[1]);
-    //await temparray.unshift(df[0]);
-    var new_sheet = await xlsx.utils.json_to_sheet(temparray);
-    var new_workbook = await xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(new_workbook, new_sheet, "test");
-    await xlsx.writeFile(new_workbook, 'test_regional.xlsx');
+    //console.log(regionRows);
+
+    // Write .xlsx file for each region
+    for (var i = 0; i < regionRows.length; i++){
+       // console.log("start index: " + j);
+        
+        var temparray = await df.slice(j, regionRows[i]-1);
+      
+        //console.log(temparray[0]);
+
+        var new_sheet = await xlsx.utils.json_to_sheet(temparray);
+        var new_workbook = await xlsx.utils.book_new();
+        xlsx.utils.book_append_sheet(new_workbook, new_sheet, "test");
+        await xlsx.writeFile(new_workbook, 'Excel_Sheets/regionLvl/' + dir + '/' + dir + '_region' + i + '.xlsx');
+
+        //console.log(temparray[temparray.length-1]);
+        j += temparray.length;
+    }
 
 }
 
