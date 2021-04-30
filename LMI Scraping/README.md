@@ -7,7 +7,7 @@ This project will automate the data collection process as it is shown in the vid
 
 https://netorgft1947697-my.sharepoint.com/:v:/g/personal/dylan_ns4ed_com/EWh3-yDOpC5EuVJwMLSnwqwBZXpfd2Ec3ExLht4Sh2SKnA
 
-# Technology
+# Technology & High-Level Process
 The software is a desktop application that automates data collection using a headless version of Goolge Chrome (Chromium).
 All components are written in Javascript/NodeJS and include:
 
