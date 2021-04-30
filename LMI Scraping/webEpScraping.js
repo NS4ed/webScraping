@@ -25,25 +25,17 @@ process.stderr.write = function(data) {
 
 // Traverse the JSON and scrap each link for state-level data
 async function traverse(jsonObj){
-   /* var j = 0;
+    var j = 0;
     for (i in jsonObj){
         link = jsonObj[i]['link'];
         dir = i;
         
         console.log("Gathering state level data for", dir, "... ");
-        if ((j + 1) % 2 == 0) await scrapBLS_GS(link, dir);
-        else scrapBLS_GS(link, dir);
+        if ((j + 1) % 2 == 0) {await scrapBLS_GS(link, dir); scrapBLS_GS(link, dir, 1);}
+        else {scrapBLS_GS(link, dir); scrapBLS_GS(link, dir, 1);}
         //scrapBLS_GS(link, dir);
         //break;
         j++;
-    }*/
-
-    for (i in jsonObj){
-        link = jsonObj[i]['link'];
-        dir = i;
-
-        scrapBLS_GS(link, dir, 1);
-        break;
     }
 
 }
