@@ -31,22 +31,22 @@ async function parseWrite(regionRows){
     var workbook = xlsx.readFile(path);
     var worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-    var df = await xlsx.utils.sheet_to_json(worksheet);
- 
+    var df = xlsx.utils.sheet_to_json(worksheet);
     //console.log(regionRows);
 
     // Write .xlsx file for each region
     for (var i = 0; i < regionRows.length; i++){
        // console.log("start index: " + j);
-        
-        var temparray = await df.slice(j, regionRows[i]-1);
-      
+        console.log(df[0])
+        console.log(df[1])
+        var temparray = df.slice(j, regionRows[i]-1);
+        temparray.unshift(df[0], df[1])
         //console.log(temparray[0]);
-
-        var new_sheet = await xlsx.utils.json_to_sheet(temparray);
-        var new_workbook = await xlsx.utils.book_new();
+        
+        var new_sheet = xlsx.utils.json_to_sheet(temparray);
+        var new_workbook = xlsx.utils.book_new();
         xlsx.utils.book_append_sheet(new_workbook, new_sheet, "test");
-        await xlsx.writeFile(new_workbook, 'Excel_Sheets/regionLvl/' + dir + '/' + dir + '_region' + i + '.xlsx');
+        xlsx.writeFile(new_workbook, 'Excel_Sheets/regionLvl/' + dir + '/' + dir + '_region' + i + '.xlsx');
 
         //console.log(temparray[temparray.length-1]);
         j += temparray.length;
